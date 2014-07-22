@@ -1,0 +1,10 @@
+._*
+.DS_Store
+/vendor/
+/tests/autoload.php
+
+# Please note that ** literal is supported only in Git >= 1.8.2
+# /tests/**/output/
+
+/tests/*/output/
+/tests/*/*/output/
