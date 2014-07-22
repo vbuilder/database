@@ -12,7 +12,7 @@
 	],
 	"require": {
 		"php": ">=5.3.1",
-		"vbuilder/composer-plugin": "~0.1.3",
+		"vbuilder/composer-plugin": "0.2.*@dev",
 		"dibi/dibi": ">=2.0.0",
 		"vbuilder/utils": ">=0.11.0"
 	},
