@@ -1,5 +1,5 @@
 {
-	"name": "vbuilder/database-utils",
+	"name": "vbuilder/database",
 	"type": "library",
 	"description": "vBuilder Framework / Database utils",
 	"keywords": ["vbuilder", "database", "utils"],
@@ -13,16 +13,26 @@
 	"require": {
 		"php": ">=5.3.1",
 		"vbuilder/composer-plugin": "~0.1.3",
-		"dibi/dibi": "~2.2.2"
+		"dibi/dibi": ">=2.0.0",
+		"vbuilder/utils": ">=0.11.0"
 	},
 	"autoload": {
 		"psr-4": {
 			"vBuilder\\": "src/"
 		}
 	},
+	"bin": [
+		"bin/db-dump",
+		"bin/db-setup"
+	],
 	"extra": {
 		"branch-alias": {
 			"dev-master": "1.0.x-dev"
+		},
+		"vbuilder": {
+			"extensions": {
+				"database": "vBuilder\\DI\\Extensions\\DibiExtension"
+			}
 		}
 	}
 }

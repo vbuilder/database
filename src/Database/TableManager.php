@@ -23,6 +23,8 @@
 
 namespace vBuilder\Database;
 
+use Nette\Utils\Strings;
+
 /**
  * Database table manager.
  *
@@ -32,5 +34,75 @@ namespace vBuilder\Database;
  * @since Jul 22, 2014
  */
 class TableManager {
+
+	/** @var string */
+	private $scriptDirPath;
+
+	/** @var array */
+	private $tables = array();
+
+	/**
+	 * Sets path to directory with SQL scripts
+	 *
+	 * @param string path
+	 * @return self
+	 */
+	function setScriptDirPath($path) {
+		$this->scriptDirPath = $path;
+		return $this;
+	}
+
+	/**
+	 * Sets path to SQL scripts for given table.
+	 *
+	 * @param string table name
+	 * @param string path to DDL script
+	 * @param string path to data script
+	 *
+	 * @return self
+	 */
+	function setTableScripts($tableName, $ddlScript, $dataScript = FALSE) {
+		$this->tables[$tableName] = array(
+			'structure' => $ddlScript,
+			'data' => $dataScript
+		);
+
+		return $this;
+	}
+
+	/**
+	 * Returns array of all defined (required) tables.
+	 *
+	 * @return string[]
+	 */
+	function getTables() {
+		return array_keys($this->tables);
+	}
+
+	/**
+	 * Returns path to DDL script.
+	 *
+	 * @param string table name
+	 * @return string path
+	 */
+	function getDdlScript($tableName) {
+		if(isset($this->tables[$tableName]) && $this->tables[$tableName]['structure'] !== NULL)
+			return $this->tables[$tableName]['structure'];
+
+		return $this->scriptDirPath . '/' . Strings::webalize($tableName, '_', false) . '.sql';
+	}
+
+	/**
+	 * Returns path to data script.
+	 *
+	 * @param string table name
+	 * @return string path
+	 */
+	function getDataScript($tableName) {
+		if(isset($this->tables[$tableName]) && $this->tables[$tableName]['data'] !== NULL)
+			return $this->tables[$tableName]['data'];
+
+		return $this->scriptDirPath . '/' . Strings::webalize($tableName, '_', false) . '.data.sql';
+	}
 
 }
