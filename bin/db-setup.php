@@ -1,12 +1,35 @@
 <?php
 
+use vBuilder\Utils\CliArgsParser,
+	vBuilder\Utils\FileSystem;
+
+$container = require __DIR__ . '/bootstrap.php';
+
+// -----------------------------------------------------------------------------
+// ARGUMENTS
+// -----------------------------------------------------------------------------
+
+$args = new CliArgsParser();
+$args
+	->addSwitch('purge', 'Purge all data')
+	->addSwitch('data', 'Setup with data')
+	->addSwitch('help', 'Help');
+
+if(!$args->parse() || $args->get('help')) {
+	if($args->get('help')) echo "\n";
+	else echo "\n" . $args->getErrorMsg() . "\n\n";
+	$args->printUsage();
+	echo "\n";
+	exit;
+}
+
 // -----------------------------------------------------------------------------
 // INIT
 // -----------------------------------------------------------------------------
 
-$container = require __DIR__ . '/bootstrap.php';
 $tm = $container->getByType('vBuilder\\Database\\TableManager');
 $db = $container->getByType('DibiConnection');
+$workPath = realpath(getcwd());
 
 // Gather all explicitly required tables
 $requiredTables = $tm->getTables();
@@ -45,6 +68,11 @@ $existingTables = $db->getDatabaseInfo()->getTableNames();
 foreach($tables as $table => $script) {
 	echo "\033[1;36m$table:\033[0m ";
 
+	// Check for data script
+	if(!$args->get('data') || !($dataScript = $tm->getDataScript($table)) || !file_exists($dataScript)) {
+		$dataScript = FALSE;
+	}
+
 	if(in_array($table, $existingTables)) {
 		echo "exists";
 
@@ -55,15 +83,36 @@ foreach($tables as $table => $script) {
 			d($createSyntax);
 		} else
 			throw new Nette\InvalidStateException("Cannot gather create table syntax for: $table"); */
+
+		// Purge all data if requested
+		if($args->get('purge')) {
+			echo ", purging all data";
+			$db->query('TRUNCATE TABLE %n', $table);
+		}
+
+		// Check if any data exists otherwise
+		elseif($dataScript) {
+			if($db->query('SELECT COUNT(*) FROM %n', $table)->fetchSingle() > 0) {
+				echo ", skipping data (table not empty)";
+				$dataScript = FALSE;
+			}
+		}
 	}
 
 	else {
 		echo "creating from \033[0;36m";
-		if(Nette\Utils\Strings::startsWith($script, __DIR__ . '/../')) echo mb_substr($script, mb_strlen(__DIR__ . '/../'));
-		else echo $script;
+		echo FileSystem::getRelativePath($workPath, $script);
 		echo "\033[0m";
 
 		$db->loadFile($script);
+	}
+
+	if($dataScript) {
+		echo ", importing data from \033[0;36m";
+		echo FileSystem::getRelativePath($workPath, $dataScript);
+		echo "\033[0m";
+
+		$db->loadFile($dataScript);
 	}
 
 	echo "\n";
