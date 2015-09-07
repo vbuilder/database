@@ -55,8 +55,16 @@ function dumpStructure(DibiConnection $db, $table, $file) {
 	$row = $db->query("SHOW CREATE TABLE %n", $table)->fetch();
 	if(!$row) throw new Nette\UnexpectedValueException("Cannot gather create table syntax for: $table");
 
-	$createSyntax = $row->{'Create Table'};
-	$createSyntax = preg_replace("/\\sAUTO_INCREMENT=([0-9]+)\\s/", " ", $createSyntax);
+	if(isset($row->{'Create Table'})) {
+		$createSyntax = $row->{'Create Table'};
+		$createSyntax = preg_replace("/\\sAUTO_INCREMENT=([0-9]+)\\s/", " ", $createSyntax);
+
+	} elseif(isset($row->{'Create View'})) {
+		$createSyntax = $row->{'Create View'};
+		$createSyntax = preg_replace("/\\sDEFINER=(\\S+)\\s/", " ", $createSyntax);
+	} else {
+		throw new Nette\InvalidStateException('Expected table or view');
+	}
 
 	// Check for existing SQL script
 	if(file_exists($file)) {
